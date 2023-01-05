@@ -1,0 +1,142 @@
+<template>
+  <div
+    class="d-flex align-item-center mt-2 mx-2 p-4 message rounded"
+    @click="
+      chatActive();
+      goTo();
+    "
+  >
+    <v-avatar tile :style="{ 'background-color': AvatarColor }" class="rounded">
+      <v-icon dark> mdi-account-group </v-icon>
+    </v-avatar>
+    <div class="d-flex flex-column pl-3 overflow-hidden">
+      <div class="text-capitalize text-h6 font-weight-bold text--secondary">
+        <v-icon v-if="type === 'p'">mdi-lock</v-icon> {{ name }}
+      </div>
+      <div class="text-truncate text-body-2">
+        {{ LastMessageSender }}: {{ lastMessage.msg }}
+      </div>
+    </div>
+    <div class="d-flex flex-column ml-auto justify-space-around">
+      <div class="text-caption">
+        {{ LastMessageTime }}
+      </div>
+      <v-badge :value="unread" :content="unread" inline color="red"></v-badge>
+    </div>
+  </div>
+</template>
+
+<script>
+export default {
+  props: {
+    name: String,
+    unread: Number,
+    lastMessage: Object,
+    lm: String,
+    chatActive: Function,
+    type: String,
+  },
+  data: () => ({}),
+  methods: {
+    isBeforeToday(date) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return date < today;
+    },
+    getLastDate() {
+      let today = new Date();
+      return new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDay() - 7
+      );
+    },
+    getWeekDay(date) {
+      switch (date) {
+        case 0:
+          return "Domingo";
+        case 1:
+          return "Lunes";
+        case 2:
+          return "Martes";
+        case 3:
+          return "Miercoles";
+        case 4:
+          return "Jueves";
+        case 5:
+          return "Viernes";
+        case 6:
+          return "Sabado";
+      }
+    },
+    goTo() {
+      let type = this.parseChannelType(this.type);
+      let url = "/" + type + "/" + this.name + "/?layout=embedded";
+      document
+        .querySelector("#Chat")
+        .contentWindow.postMessage(
+          { externalCommand: "go", path: url },
+          "http://192.168.42.89:3000"
+        );
+    },
+    parseChannelType(type) {
+      switch (type) {
+        case "c":
+          return "channel";
+        case "p":
+          return "group";
+      }
+    },
+  },
+  computed: {
+    LastMessageSender() {
+      let firstName = this.lastMessage.u.name.split(" ")[0];
+      let lastName = this.lastMessage.u.name.split(" ")[1][0];
+      return firstName + " " + lastName;
+    },
+    LastMessageTime() {
+      let now = new Date();
+      let messageTime = new Date(this.lm);
+      let lastWeekDate = this.getLastDate();
+      let monthYear = { day: "numeric", month: "short" };
+      let hourMin = { hour: "2-digit", minute: "2-digit" };
+
+      //Message correspond to last year and older
+      if (messageTime.getFullYear() < now.getFullYear()) {
+        return messageTime.toLocaleDateString();
+      }
+      //Message is older than last week
+      if (lastWeekDate > messageTime) {
+        return messageTime.toLocaleDateString("es-ES", monthYear);
+      }
+      //Time of Message is from yesterday
+      if (now.getDate() - messageTime.getDate() === 1) {
+        return "Ayer";
+      }
+      //Time of Message corresponds to today
+      if (!this.isBeforeToday(messageTime)) {
+        return messageTime.toLocaleTimeString("es-ES", hourMin);
+      }
+      //As Message is within last week show the week day making it easier for the user
+      return this.getWeekDay(messageTime.getDay());
+    },
+    AvatarColor() {
+      // returns a random color for the avatar item
+      return (
+        "#" +
+        Math.floor(Math.random() * 16777215)
+          .toString(16)
+          .padStart(6, 0)
+      );
+    },
+  },
+};
+</script>
+
+<style scoped>
+.message {
+  /* border: 1px #393939 solid; */
+  padding: 5px;
+  background-color: #f5f5f5;
+}
+</style>
