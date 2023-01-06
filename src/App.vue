@@ -118,7 +118,6 @@ export default {
     searchClosed: true,
     activeChatView: false,
     ShowNotifications: false,
-    counter: 0,
   }),
   methods: {
     filterSearchItems(arr, query) {
@@ -129,6 +128,8 @@ export default {
     activateChatView() {
       this.activeChatView = true;
     },
+
+
     updateUnRead(unReadCount, channelId) {
       for (let i = 0; i < this.channels.length; i++) {
         if (this.channels[i]._id === channelId) {
@@ -140,13 +141,17 @@ export default {
         }
       }
     },
+
     setUnread(channelList) {
       for (let i = 0; i < channelList.length; i++) {
         if (channelList[i].unread === undefined) {
-          channelList[i].unread = 0;
+          channelList[i].unread = 1;
+        }else{
+          return
         }
       }
     },
+
     getChannels() {
       let url = "http://192.168.42.89:3000/api/v1/rooms.get";
       let config = {

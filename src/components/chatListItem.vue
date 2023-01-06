@@ -23,7 +23,7 @@
       <div class="text-caption font-weight-light text-subtitle-2">
         {{ LastMessageTime }}
       </div>
-      <v-badge :value="unread" :content="unread" inline color="red"></v-badge>
+      <v-badge :value="unread" :content="unread" inline color="red" class="align-self-end"></v-badge>
     </div>
   </div>
 </template>
