@@ -1,16 +1,18 @@
 <template>
   <div
-    class="d-flex align-item-center mt-2 mx-2 p-4 message rounded"
+    class="d-flex align-item-center mt-1 mx-1 message rounded"
     @click="
       chatActive();
       goTo();
     "
   >
-    <v-avatar tile :style="{ 'background-color': AvatarColor }" class="rounded">
+    <v-avatar tile :color="AvatarColor" class="rounded">
       <v-icon dark> mdi-account-group </v-icon>
     </v-avatar>
     <div class="d-flex flex-column pl-3 overflow-hidden">
-      <div class="text-capitalize text-h6 font-weight-bold text--secondary">
+      <div
+        class="text-capitalize text-h6 font-weight-medium text--primary chatTitle"
+      >
         <v-icon v-if="type === 'p'">mdi-lock</v-icon> {{ name }}
       </div>
       <div class="text-truncate text-body-2">
@@ -18,7 +20,7 @@
       </div>
     </div>
     <div class="d-flex flex-column ml-auto justify-space-around">
-      <div class="text-caption">
+      <div class="text-caption font-weight-light text-subtitle-2">
         {{ LastMessageTime }}
       </div>
       <v-badge :value="unread" :content="unread" inline color="red"></v-badge>
@@ -134,9 +136,14 @@ export default {
 </script>
 
 <style scoped>
+/* @import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@100;200;300;400;500;600;700;800;900&family=Source+Sans+Pro:wght@200;300;400;600;700;900&display=swap"); */
 .message {
   /* border: 1px #393939 solid; */
   padding: 5px;
-  background-color: #f5f5f5;
+  background-color: #f7f7f7;
+}
+
+.chatTitle {
+  font-family: "Montserrat", sans-serif;
 }
 </style>

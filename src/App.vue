@@ -1,6 +1,6 @@
 <template>
   <v-app>
-    <v-toolbar color="light blue" max-height="48px">
+    <v-toolbar color="light blue" max-height="48px" elevation="1" class="pa-1">
       <v-toolbar-title>Chats</v-toolbar-title>
       <v-spacer></v-spacer>
       <v-text-field
@@ -16,11 +16,47 @@
         rounded
       >
       </v-text-field>
+      <div class="d-flex align-center">
+        <v-menu
+          v-model="ShowNotifications"
+          :close-on-content-click="true"
+          :nudge-width="300"
+          offset-x
+          max-height="400px"
+        >
+          <template v-slot:activator="{ on, attrs }">
+            <v-btn rounded outlined class="mb-3 ml-4" v-bind="attrs" v-on="on"
+              ><v-icon>mdi-message-badge</v-icon></v-btn
+            >
+          </template>
+          <v-card>
+            <notificationsItem
+              v-for="notf in notifications"
+              :key="notf._id"
+              :sender="notf.u"
+              :time="notf.ts"
+              :message="notf.msg"
+              :in-menu="true"
+            ></notificationsItem>
+          </v-card>
+        </v-menu>
+      </div>
     </v-toolbar>
 
-    <v-main>
-      <notificationsItem></notificationsItem>
-      <div class="chatList">
+    <v-main class="messageContainer">
+      <div v-if="notifications.length>0" class="notfList mt-1">
+        <draggable :sort="false">
+          <notificationsItem
+            v-for="notf in notifications"
+            :key="notf._id"
+            :sender="notf.u"
+            :time="notf.ts"
+            :message="notf.msg"
+            :in-menu="false"
+          ></notificationsItem>
+        </draggable>
+      </div>
+      <div class="chatList mx-1 mb-1 py-1 rounded">
         <chatListItem
           v-for="(channel, key) in activeChats"
           :key="key"
@@ -37,9 +73,11 @@
         <v-navigation-drawer
           v-show="activeChatView === true"
           width="100%"
+          height="715px"
           v-model="activeChatView"
-          bottom
           fixed
+          right
+          class="mt-12"
         >
           <template>
             <iframe
@@ -59,21 +97,24 @@
 
 <script>
 import chatListItem from "./components/chatListItem";
-import axios from "axios";
 import notificationsItem from "./components/notificationsItem.vue";
+import axios from "axios";
+import draggable from "vuedraggable";
 
 export default {
   name: "App",
   components: {
     chatListItem,
     notificationsItem,
+    draggable,
   },
   data: () => ({
     channels: [],
+    notifications: [],
     search: "",
     searchClosed: true,
     activeChatView: false,
-    notifications: [],
+    ShowNotifications: false,
   }),
   methods: {
     filterSearchItems(arr, query) {
@@ -91,7 +132,7 @@ export default {
         }
       }
     },
-    getChannels() {
+    async getChannels() {
       let url = "http://192.168.42.89:3000/api/v1/rooms.get";
       let config = {
         method: "get",
@@ -102,7 +143,7 @@ export default {
       };
       axios.get(url, config).then((res) => (this.channels = res.data.update));
     },
-    getNotifications() {
+    async getNotifications() {
       let today = new Date();
       today.setHours(0, 0, 0, 0);
       let url = "http://192.168.42.89:3000/api/v1/channels.history";
@@ -114,7 +155,7 @@ export default {
         },
         params: {
           roomId: "hdSoFgo9zyodbL7Tg",
-          oldest: today.toISOString(), // Only returns the notifications of Today
+          oldest: today.toISOString(),
         },
       };
       axios
@@ -123,22 +164,20 @@ export default {
     },
   },
   mounted() {
-    this.getChannels();
-    this.getNotifications();
     window.addEventListener("message", (e) => {
       if (e.data.eventName === "unread-changed-by-subscription") {
-        console.log(
-          e.data.data.name + ": Number of unreads " + e.data.data.unread
-        );
         this.updateUnRead(e.data.data.unread, e.data.data.rid, this.channels);
       }
     });
+    this.getChannels();
+    this.getNotifications();
   },
   computed: {
     activeChats() {
       // filter out direct messages and empty channels
       let activeChats = this.channels.filter(
-        (elem) => elem.t !== "d" && elem.msgs !== 0
+        (elem) =>
+          elem.t !== "d" && elem.msgs !== 0 && elem._id !== "hdSoFgo9zyodbL7Tg"
       );
       // sort by date without instance to improve perf
       let sortedChats = activeChats.sort(
@@ -153,20 +192,15 @@ export default {
   },
 };
 </script>
-
 <style scoped lang="sass">
-
+.messageContainer
+  background-color: #aae0ff
 .chatList
-  height: 90%
-  overflow: scroll
-
-.chatView
-  position: absolute
-
+  // height: 60%
+  // overflow: scroll
+  background-color: white
 .v-input.expandingSearch
   transition: max-width 0.3s
   &.closed
       max-width: 70px
-      .v-input__slot
-          background: transparent !important
 </style>
