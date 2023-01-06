@@ -44,16 +44,17 @@
     </v-toolbar>
 
     <v-main class="messageContainer">
-      <div v-if="notifications.length>0" class="notfList mt-1">
+      <itemTest></itemTest>
+      <div v-if="notifications.length > 0" class="notfList mt-1">
         <draggable :sort="false">
-          <notificationsItem
+          <!-- <notificationsItem
             v-for="notf in notifications"
             :key="notf._id"
             :sender="notf.u"
             :time="notf.ts"
             :message="notf.msg"
             :in-menu="false"
-          ></notificationsItem>
+          ></notificationsItem> -->
         </draggable>
       </div>
       <div class="chatList mx-1 mb-1 py-1 rounded">
@@ -61,7 +62,7 @@
           v-for="(channel, key) in activeChats"
           :key="key"
           :name="channel.name"
-          :unread="channel.unread || null"
+          :unread="channel.unread"
           :lastMessage="channel.lastMessage"
           :lm="channel.lm"
           :type="channel.t"
@@ -100,6 +101,7 @@ import chatListItem from "./components/chatListItem";
 import notificationsItem from "./components/notificationsItem.vue";
 import axios from "axios";
 import draggable from "vuedraggable";
+import itemTest from "./components/itemTest.vue";
 
 export default {
   name: "App",
@@ -107,6 +109,7 @@ export default {
     chatListItem,
     notificationsItem,
     draggable,
+    itemTest,
   },
   data: () => ({
     channels: [],
@@ -115,6 +118,7 @@ export default {
     searchClosed: true,
     activeChatView: false,
     ShowNotifications: false,
+    counter: 0,
   }),
   methods: {
     filterSearchItems(arr, query) {
@@ -125,14 +129,25 @@ export default {
     activateChatView() {
       this.activeChatView = true;
     },
-    updateUnRead(unReadCount, channelId, arr) {
-      for (let i = 0; i < arr.length; i++) {
-        if (arr[i]._id === channelId) {
-          arr[i].unread = unReadCount;
+    updateUnRead(unReadCount, channelId) {
+      for (let i = 0; i < this.channels.length; i++) {
+        if (this.channels[i]._id === channelId) {
+          if ("unread" in this.channels[i]) {
+            this.channels[i].unread = unReadCount;
+          } else {
+            this.channels[i].unread = 0;
+          }
         }
       }
     },
-    async getChannels() {
+    setUnread(channelList) {
+      for (let i = 0; i < channelList.length; i++) {
+        if (channelList[i].unread === undefined) {
+          channelList[i].unread = 0;
+        }
+      }
+    },
+    getChannels() {
       let url = "http://192.168.42.89:3000/api/v1/rooms.get";
       let config = {
         method: "get",
@@ -141,9 +156,13 @@ export default {
           "X-User-Id": "797vWWZ5MBsFW5Paz",
         },
       };
-      axios.get(url, config).then((res) => (this.channels = res.data.update));
+      axios.get(url, config).then((res) => {
+        this.setUnread(res.data.update);
+        this.channels = res.data.update;
+      });
     },
-    async getNotifications() {
+
+    getNotifications() {
       let today = new Date();
       today.setHours(0, 0, 0, 0);
       let url = "http://192.168.42.89:3000/api/v1/channels.history";
@@ -164,13 +183,19 @@ export default {
     },
   },
   mounted() {
-    window.addEventListener("message", (e) => {
-      if (e.data.eventName === "unread-changed-by-subscription") {
-        this.updateUnRead(e.data.data.unread, e.data.data.rid, this.channels);
-      }
-    });
+    let that = this;
     this.getChannels();
     this.getNotifications();
+    window.addEventListener(
+      "message",
+      (e) => {
+        if (e.data.eventName === "unread-changed-by-subscription") {
+          that.updateUnRead(e.data.data.unread, e.data.data.rid);
+          // that.getChannels();
+        }
+      },
+      { passive: true }
+    );
   },
   computed: {
     activeChats() {
