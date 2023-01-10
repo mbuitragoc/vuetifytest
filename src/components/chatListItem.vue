@@ -23,7 +23,13 @@
       <div class="text-caption font-weight-light text-subtitle-2">
         {{ LastMessageTime }}
       </div>
-      <v-badge :value="unread" :content="unread" inline color="red" class="align-self-end"></v-badge>
+      <v-badge
+        :value="unread"
+        :content="unread"
+        inline
+        color="red darken-2"
+        class="align-self-end"
+      ></v-badge>
     </div>
   </div>
 </template>
@@ -34,7 +40,6 @@ export default {
     name: String,
     unread: Number,
     lastMessage: Object,
-    lm: String,
     chatActive: Function,
     type: String,
   },
@@ -98,7 +103,7 @@ export default {
     },
     LastMessageTime() {
       let now = new Date();
-      let messageTime = new Date(this.lm);
+      let messageTime = new Date(this.lastMessage.ts);
       let lastWeekDate = this.getLastDate();
       let monthYear = { day: "numeric", month: "short" };
       let hourMin = { hour: "2-digit", minute: "2-digit" };
@@ -138,7 +143,6 @@ export default {
 <style scoped>
 /* @import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@100;200;300;400;500;600;700;800;900&family=Source+Sans+Pro:wght@200;300;400;600;700;900&display=swap"); */
 .message {
-  /* border: 1px #393939 solid; */
   padding: 5px;
   background-color: #f7f7f7;
 }

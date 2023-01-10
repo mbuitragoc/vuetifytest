@@ -25,7 +25,13 @@
           max-height="400px"
         >
           <template v-slot:activator="{ on, attrs }">
-            <v-btn rounded outlined class="mb-3 ml-4" v-bind="attrs" v-on="on"
+            <v-btn
+              aria-label="Notifications"
+              rounded
+              outlined
+              class="mb-3 ml-4"
+              v-bind="attrs"
+              v-on="on"
               ><v-icon>mdi-message-badge</v-icon></v-btn
             >
           </template>
@@ -44,27 +50,27 @@
     </v-toolbar>
 
     <v-main class="messageContainer">
-      <itemTest></itemTest>
+      <!-- <itemTest></itemTest> -->
       <div v-if="notifications.length > 0" class="notfList mt-1">
         <draggable :sort="false">
-          <!-- <notificationsItem
+          <notificationsItem
             v-for="notf in notifications"
             :key="notf._id"
             :sender="notf.u"
             :time="notf.ts"
             :message="notf.msg"
             :in-menu="false"
-          ></notificationsItem> -->
+          >
+          </notificationsItem>
         </draggable>
       </div>
-      <div class="chatList mx-1 mb-1 py-1 rounded">
+      <div class="chatList mx-1 my-2 py-1 rounded">
         <chatListItem
           v-for="(channel, key) in activeChats"
           :key="key"
           :name="channel.name"
           :unread="channel.unread"
           :lastMessage="channel.lastMessage"
-          :lm="channel.lm"
           :type="channel.t"
           :chatActive="activateChatView"
         />
@@ -88,6 +94,7 @@
               width="100%"
               height="100%"
               id="Chat"
+              title="Chat"
             ></iframe>
           </template>
         </v-navigation-drawer>
@@ -99,9 +106,9 @@
 <script>
 import chatListItem from "./components/chatListItem";
 import notificationsItem from "./components/notificationsItem.vue";
+// import itemTest from "./components/itemTest.vue";
 import axios from "axios";
 import draggable from "vuedraggable";
-import itemTest from "./components/itemTest.vue";
 
 export default {
   name: "App",
@@ -109,7 +116,7 @@ export default {
     chatListItem,
     notificationsItem,
     draggable,
-    itemTest,
+    // itemTest,
   },
   data: () => ({
     channels: [],
@@ -129,29 +136,6 @@ export default {
       this.activeChatView = true;
     },
 
-
-    updateUnRead(unReadCount, channelId) {
-      for (let i = 0; i < this.channels.length; i++) {
-        if (this.channels[i]._id === channelId) {
-          if ("unread" in this.channels[i]) {
-            this.channels[i].unread = unReadCount;
-          } else {
-            this.channels[i].unread = 0;
-          }
-        }
-      }
-    },
-
-    setUnread(channelList) {
-      for (let i = 0; i < channelList.length; i++) {
-        if (channelList[i].unread === undefined) {
-          channelList[i].unread = 1;
-        }else{
-          return
-        }
-      }
-    },
-
     getChannels() {
       let url = "http://192.168.42.89:3000/api/v1/rooms.get";
       let config = {
@@ -165,6 +149,44 @@ export default {
         this.setUnread(res.data.update);
         this.channels = res.data.update;
       });
+    },
+    setUnread(channelList) {
+      for (let i = 0; i < channelList.length; i++) {
+        channelList[i].unread = 0;
+      }
+    },
+
+    async updateUnRead(unReadCount, channelId) {
+      for (let i = 0; i < this.channels.length; i++) {
+        if (this.channels[i]._id === channelId) {
+          let lastMessage = await this.getLastMessage(channelId);
+          this.channels[i].unread = unReadCount;
+          this.channels[i].lastMessage = lastMessage;
+        }
+      }
+    },
+    async getLastMessage(roomId) {
+      let channel = this.channels.find((el) => el._id === roomId);
+      let config = {
+        method: "get",
+        headers: {
+          "X-Auth-Token": "i8tJIjKQ3Tazybics55Gv10xd-PZ5XVyA1AGvVb7558",
+          "X-User-Id": "797vWWZ5MBsFW5Paz",
+        },
+        params: {
+          roomId: roomId,
+          count: 1,
+        },
+      };
+      if (channel.t === "p") {
+        let url = "http://192.168.42.89:3000/api/v1/groups.history";
+        let response = await axios.get(url, config);
+        return response.data.messages[0];
+      } else {
+        let url = "http://192.168.42.89:3000/api/v1/channels.history";
+        let response = await axios.get(url, config);
+        return response.data.messages[0];
+      }
     },
 
     getNotifications() {
@@ -187,6 +209,7 @@ export default {
         .then((res) => (this.notifications = res.data.messages));
     },
   },
+
   mounted() {
     let that = this;
     this.getChannels();
@@ -195,13 +218,18 @@ export default {
       "message",
       (e) => {
         if (e.data.eventName === "unread-changed-by-subscription") {
-          that.updateUnRead(e.data.data.unread, e.data.data.rid);
-          // that.getChannels();
+          if (e.data.data.t !== "d") {
+            that.updateUnRead(e.data.data.unread, e.data.data.rid);
+            if (e.data.data.rid === "hdSoFgo9zyodbL7Tg") {
+              this.getNotifications();
+            }
+          }
         }
       },
       { passive: true }
     );
   },
+
   computed: {
     activeChats() {
       // filter out direct messages and empty channels
@@ -211,7 +239,7 @@ export default {
       );
       // sort by date without instance to improve perf
       let sortedChats = activeChats.sort(
-        (a, b) => Date.parse(b.lm) - Date.parse(a.lm)
+        (a, b) => Date.parse(b.lastMessage.ts) - Date.parse(a.lastMessage.ts)
       );
       // user is searching from the bar
       if (this.search.length > 0) {
@@ -222,6 +250,7 @@ export default {
   },
 };
 </script>
+
 <style scoped lang="sass">
 .messageContainer
   background-color: #aae0ff
