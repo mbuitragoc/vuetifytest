@@ -110,6 +110,11 @@ import notificationsItem from "./components/notificationsItem.vue";
 import axios from "axios";
 import draggable from "vuedraggable";
 
+const notificationChannelId = "hdSoFgo9zyodbL7Tg";
+const userId = "797vWWZ5MBsFW5Paz";
+const authToken = "i8tJIjKQ3Tazybics55Gv10xd-PZ5XVyA1AGvVb7558";
+const serverUrl = "http://192.168.42.89:3000/api/v1/";
+
 export default {
   name: "App",
   components: {
@@ -137,12 +142,12 @@ export default {
     },
 
     getChannels() {
-      let url = "http://192.168.42.89:3000/api/v1/rooms.get";
+      let url = serverUrl + "rooms.get";
       let config = {
         method: "get",
         headers: {
-          "X-Auth-Token": "i8tJIjKQ3Tazybics55Gv10xd-PZ5XVyA1AGvVb7558",
-          "X-User-Id": "797vWWZ5MBsFW5Paz",
+          "X-Auth-Token": authToken,
+          "X-User-Id": userId,
         },
       };
       axios.get(url, config).then((res) => {
@@ -170,8 +175,8 @@ export default {
       let config = {
         method: "get",
         headers: {
-          "X-Auth-Token": "i8tJIjKQ3Tazybics55Gv10xd-PZ5XVyA1AGvVb7558",
-          "X-User-Id": "797vWWZ5MBsFW5Paz",
+          "X-Auth-Token": authToken,
+          "X-User-Id": userId,
         },
         params: {
           roomId: roomId,
@@ -179,11 +184,11 @@ export default {
         },
       };
       if (channel.t === "p") {
-        let url = "http://192.168.42.89:3000/api/v1/groups.history";
+        let url = serverUrl + "groups.history";
         let response = await axios.get(url, config);
         return response.data.messages[0];
       } else {
-        let url = "http://192.168.42.89:3000/api/v1/channels.history";
+        let url = serverUrl + "channels.history";
         let response = await axios.get(url, config);
         return response.data.messages[0];
       }
@@ -192,15 +197,15 @@ export default {
     getNotifications() {
       let today = new Date();
       today.setHours(0, 0, 0, 0);
-      let url = "http://192.168.42.89:3000/api/v1/channels.history";
+      let url = serverUrl + "channels.history";
       let config = {
         method: "get",
         headers: {
-          "X-Auth-Token": "i8tJIjKQ3Tazybics55Gv10xd-PZ5XVyA1AGvVb7558",
-          "X-User-Id": "797vWWZ5MBsFW5Paz",
+          "X-Auth-Token": authToken,
+          "X-User-Id": userId,
         },
         params: {
-          roomId: "hdSoFgo9zyodbL7Tg",
+          roomId: notificationChannelId,
           oldest: today.toISOString(),
         },
       };
@@ -211,7 +216,6 @@ export default {
   },
 
   mounted() {
-    let that = this;
     this.getChannels();
     this.getNotifications();
     window.addEventListener(
@@ -219,8 +223,8 @@ export default {
       (e) => {
         if (e.data.eventName === "unread-changed-by-subscription") {
           if (e.data.data.t !== "d") {
-            that.updateUnRead(e.data.data.unread, e.data.data.rid);
-            if (e.data.data.rid === "hdSoFgo9zyodbL7Tg") {
+            this.updateUnRead(e.data.data.unread, e.data.data.rid);
+            if (e.data.data.rid === notificationChannelId) {
               this.getNotifications();
             }
           }
@@ -235,7 +239,9 @@ export default {
       // filter out direct messages and empty channels
       let activeChats = this.channels.filter(
         (elem) =>
-          elem.t !== "d" && elem.msgs !== 0 && elem._id !== "hdSoFgo9zyodbL7Tg"
+          elem.t !== "d" &&
+          elem.msgs !== 0 &&
+          elem._id !== notificationChannelId
       );
       // sort by date without instance to improve perf
       let sortedChats = activeChats.sort(
