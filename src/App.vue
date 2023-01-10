@@ -106,14 +106,14 @@
 <script>
 import chatListItem from "./components/chatListItem";
 import notificationsItem from "./components/notificationsItem.vue";
-// import itemTest from "./components/itemTest.vue";
 import axios from "axios";
 import draggable from "vuedraggable";
+// import itemTest from "./components/itemTest.vue";
 
-const notificationChannelId = "hdSoFgo9zyodbL7Tg";
-const userId = "797vWWZ5MBsFW5Paz";
-const authToken = "i8tJIjKQ3Tazybics55Gv10xd-PZ5XVyA1AGvVb7558";
-const serverUrl = "http://192.168.42.89:3000/api/v1/";
+const notificationChannelId = process.env.VUE_APP_NOTF_CHANNEL_ID;
+const userId = process.env.VUE_APP_USER_ID;
+const authToken = process.env.VUE_APP_AUTH_TOKEN;
+const serverUrl = process.env.VUE_APP_SERVER_URL;
 
 export default {
   name: "App",
