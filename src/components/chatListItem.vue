@@ -16,7 +16,7 @@
         <v-icon v-if="type === 'p'">mdi-lock</v-icon> {{ name }}
       </div>
       <div class="text-truncate text-body-2">
-        {{ LastMessageSender }}: {{ lastMessage.msg }}
+        {{ LastMessageSender }}: {{ LastMessageInfo }}
       </div>
     </div>
     <div class="d-flex flex-column ml-auto justify-space-around">
@@ -127,11 +127,18 @@ export default {
       //As Message is within last week show the week day making it easier for the user
       return this.getWeekDay(messageTime.getDay());
     },
+    LastMessageInfo(){
+      let lastMessage = this.lastMessage
+      if(lastMessage.md.length > 1){
+        return lastMessage.md[1].value[0].value
+      }
+      return lastMessage.msg
+    },
     AvatarColor() {
       // returns a random color for the avatar item
       return (
         "#" +
-        Math.floor(Math.random() * 16777215)
+        Math.floor(Math.abs(Math.sin(Math.random()) * 16777215))
           .toString(16)
           .padStart(6, 0)
       );

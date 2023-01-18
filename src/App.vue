@@ -32,7 +32,9 @@
               class="mb-3 ml-4"
               v-bind="attrs"
               v-on="on"
-              ><v-icon>mdi-message-badge</v-icon></v-btn
+              ><v-icon>{{
+                notifications.length > 0 ? "mdi-bell-badge" : "mdi-bell"
+              }}</v-icon></v-btn
             >
           </template>
           <v-card>
@@ -89,7 +91,7 @@
           <template>
             <iframe
               class="mt-2 px-4"
-              src="http://192.168.42.89:3000/channel/general?layout=embedded"
+              src="http://192.168.42.89:3000/?layout=embedded"
               frameborder="0"
               width="100%"
               height="100%"
@@ -162,14 +164,15 @@ export default {
     },
 
     async updateUnRead(unReadCount, channelId) {
-      for (let i = 0; i < this.channels.length; i++) {
-        if (this.channels[i]._id === channelId) {
+      for (let channel of this.channels) {
+        if (channel._id === channelId) {
           let lastMessage = await this.getLastMessage(channelId);
-          this.channels[i].unread = unReadCount;
-          this.channels[i].lastMessage = lastMessage;
+          channel.unread = unReadCount;
+          channel.lastMessage = lastMessage;
         }
       }
     },
+    
     async getLastMessage(roomId) {
       let channel = this.channels.find((el) => el._id === roomId);
       let config = {
@@ -214,10 +217,11 @@ export default {
         .then((res) => (this.notifications = res.data.messages));
     },
   },
-
-  mounted() {
+  created() {
     this.getChannels();
     this.getNotifications();
+  },
+  mounted() {
     window.addEventListener(
       "message",
       (e) => {
