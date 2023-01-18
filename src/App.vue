@@ -156,8 +156,8 @@ export default {
       });
     },
     setUnread(channelList) {
-      for (let i = 0; i < channelList.length; i++) {
-        channelList[i].unread = 0;
+      for (let channel of channelList) {
+        channel.unread = 0;
       }
     },
 
